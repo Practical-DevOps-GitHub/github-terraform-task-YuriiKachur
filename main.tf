@@ -1,63 +1,78 @@
-name: Ruby
+provider "github" {
+  token = var.github_token
+  owner = var.github_owner
+}
 
-env:
-  SECRETS_TOKEN: ${{ secrets.PAT }}
+resource "github_repository" "repo" {
+  name               = var.repository_name
+  description        = "Terraform managed repository"
+  visibility         = "private"
+  auto_init          = true
+  license_template   = "mit"
+  gitignore_template = "Terraform"
+}
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    - cron: '04 05 14 05 *'
-  workflow_dispatch:
+resource "github_branch" "develop" {
+  repository = github_repository.repo.name
+  branch     = "develop"
+}
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+resource "github_branch_default" "default" {
+  repository = github_repository.repo.name
+  branch     = github_branch.develop.branch
+}
 
-    steps:
-      - name: Install my-app token
-        id: my-app
-        uses: getsentry/action-github-app-token@v3
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+resource "github_branch_protection" "main" {
+  repository_id  = github_repository.repo.node_id
+  pattern        = "main"
 
-      - uses: actions/checkout@v3
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = true
+    require_code_owner_reviews      = true
+  }
+}
 
-      - name: Write code to file
-        run: |
-          cat << EOTFC > main.tf
-          ${{ secrets.TERRAFORM }}
-          EOTFC
+resource "github_branch_protection" "develop" {
+  repository_id  = github_repository.repo.node_id
+  pattern        = "develop"
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_wrapper: false
+  required_pull_request_reviews {
+    required_approving_review_count = 2
+  }
+}
 
-      - name: Terraform Init
-        run: terraform init
+resource "github_repository_collaborator" "collaborator" {
+  repository = github_repository.repo.name
+  username   = "softservedata"
+  permission = "push"
+}
 
-      - name: Test Terraform Config
-        run: |
-          terraform validate
-          terraform plan -no-color -out tfplan
-          PLAN=$(terraform show -json tfplan)
-          bash -e .github/tests/test/tests.sh "$PLAN" .github/tests/test/test_cases.txt
+resource "github_repository_file" "pull_request_template" {
+  repository          = github_repository.repo.name
+  branch              = github_branch.develop.branch
+  file                = ".github/pull_request_template.md"
+  content             = file("pull_request_template.md")
+  commit_message      = "Add pull request template"
+  commit_author       = "Terraform User"
+  commit_email        = "terraform@example.com"
+  overwrite_on_create = true
+}
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          working-directory: '.github/tests'
-          bundler-cache: true
+resource "github_actions_secret" "pat" {
+  repository      = github_repository.repo.name
+  secret_name     = "PAT"
+  plaintext_value = var.pat
+}
 
-      - name: Run tests
-        env:
-          URL: ${{ github.repository }}
-          TOKEN: ${{ steps.my-app.outputs.token }}
-        working-directory: '.github/tests'
-        run: |
-          ruby test/script_test.rb
+resource "github_actions_secret" "terraform" {
+  repository      = github_repository.repo.name
+  secret_name     = "TERRAFORM"
+  plaintext_value = file("main.tf")
+}
+
+resource "github_repository_deploy_key" "deploy_key" {
+  title      = "DEPLOY_KEY"
+  repository = github_repository.repo.name
+  key        = var.deploy_key
+  read_only  = false
+}
