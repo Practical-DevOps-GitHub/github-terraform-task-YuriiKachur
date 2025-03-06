@@ -17,7 +17,7 @@ resource "github_branch" "develop" {
   branch     = "develop"
 }
 
-resource "github_branch_default" "default" {
+resource "github_branch_default" "develop" {
   repository = github_repository.repo.name
   branch     = github_branch.develop.branch
 }
@@ -41,7 +41,7 @@ resource "github_branch_protection" "develop" {
   }
 }
 
-resource "github_repository_collaborator" "collaborator" {
+resource "github_repository_collaborator" "softservedata" {
   repository = github_repository.repo.name
   username   = "softservedata"
   permission = "push"
