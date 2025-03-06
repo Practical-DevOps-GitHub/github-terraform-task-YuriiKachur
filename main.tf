@@ -8,3 +8,4 @@ resource "github_branch" "develop" {
 resource "github_branch_default" "default" {
   repository = github_repository.repo.name
   branch     = github_branch.develop.branch
+}
