@@ -19,21 +19,24 @@ variable "repository_name" {
   type        = string
 }
 
-# Set the default branch to `develop`
-resource "github_branch_default" "default" {
-  repository = var.repository_name
-  branch     = "develop"
+# Configure the existing repository
+resource "github_repository" "repo" {
+  name               = var.repository_name
+  description        = "Example repository with Terraform"
+  visibility         = "private"
+  auto_init          = true
+  default_branch     = "develop"  # Set the default branch to `develop`
 }
 
 # Create the `develop` branch
 resource "github_branch" "develop" {
-  repository = var.repository_name
+  repository = github_repository.repo.name
   branch     = "develop"
 }
 
 # Add `softservedata` as a collaborator
 resource "github_repository_collaborator" "collaborator" {
-  repository = var.repository_name
+  repository = github_repository.repo.name
   username   = "softservedata"
   permission = "push"
 }
