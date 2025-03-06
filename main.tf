@@ -5,7 +5,6 @@ provider "github" {
 
 
 resource "github_branch" "develop" {
-  repository = github_repository.repo.name
   branch     = "develop"
 }
 
