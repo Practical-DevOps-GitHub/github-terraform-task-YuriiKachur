@@ -1,4 +1,8 @@
+resource "github_branch_default" "develop" {
+  repository = github_repository.repo.name
+  branch     = "develop"  # Створення гілки develop
+}
 
-# Set the default branch to `develop`
-resource "github_branch_default" {
-  branch     = "develop"
+output "default_branch" {
+  value = github_repository.repo.default_branch  # Повертаємо дефолтну гілку
+}
