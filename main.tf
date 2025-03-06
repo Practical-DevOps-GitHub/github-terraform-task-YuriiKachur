@@ -1,15 +1,26 @@
 provider "github" {
   token = var.github_token
-  owner = var.github_owner
 }
 
+variable "github_token" {}
+variable "repo_name" { default = "your-repository-name" }
+variable "deploy_key_path" { default = "~/.ssh/id_rsa.pub" }
+variable "discord_webhook_url" {}
+
 resource "github_repository" "repo" {
-  name               = var.repository_name
-  description        = "Terraform managed repository"
-  visibility         = "private"
-  auto_init          = true
-  license_template   = "mit"
-  gitignore_template = "Terraform"
+  name        = var.repo_name
+  description = "Repository managed by Terraform"
+  visibility  = "private"
+  auto_init   = true
+  has_issues  = true
+  has_projects = true
+  has_wiki    = true
+}
+
+resource "github_repository_collaborator" "collaborator" {
+  repository = github_repository.repo.name
+  username   = "softservedata"
+  permission = "push"
 }
 
 resource "github_branch" "develop" {
@@ -22,59 +33,74 @@ resource "github_branch_default" "default" {
   branch     = github_branch.develop.branch
 }
 
-resource "github_branch_protection" "main" {
-  repository_id  = github_repository.repo.node_id
-  pattern        = "main"
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews = true
-    require_code_owner_reviews = true
+resource "github_branch_protection" "develop_protection" {
+  repository = github_repository.repo.name
+  branch     = github_branch.develop.branch
+  required_status_checks {
+    strict   = true
+    contexts = []
   }
-}
-
-resource "github_branch_protection" "develop" {
-  repository_id  = github_repository.repo.node_id
-  pattern        = "develop"
-
   required_pull_request_reviews {
     required_approving_review_count = 2
   }
+  restrictions {}
 }
 
-resource "github_repository_collaborator" "collaborator" {
+resource "github_branch_protection" "main_protection" {
   repository = github_repository.repo.name
-  username   = "softservedata"
-  permission = "push"
+  branch     = "main"
+  required_status_checks {
+    strict   = true
+    contexts = []
+  }
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+    require_code_owner_reviews      = true
+  }
+  restrictions {}
 }
 
-resource "github_repository_file" "pull_request_template" {
+resource "github_repository_file" "codeowners" {
   repository          = github_repository.repo.name
-  branch              = github_branch.develop.branch
-  file                = ".github/pull_request_template.md"
-  content             = file("pull_request_template.md")
-  commit_message      = "Add pull request template"
-  commit_author       = "Terraform User"
-  commit_email        = "terraform@example.com"
+  file               = ".github/CODEOWNERS"
+  content            = "* @softservedata"
+  commit_message     = "Add CODEOWNERS file"
   overwrite_on_create = true
 }
 
-resource "github_actions_secret" "pat" {
-  repository      = github_repository.repo.name
-  secret_name     = "PAT"
-  plaintext_value = var.pat
-}
+resource "github_repository_file" "pr_template" {
+  repository          = github_repository.repo.name
+  file               = ".github/pull_request_template.md"
+  content            = <<EOT
+## Describe your changes
 
-resource "github_actions_secret" "terraform" {
-  repository      = github_repository.repo.name
-  secret_name     = "TERRAFORM"
-  plaintext_value = file("main.tf")
+## Issue ticket number and link
+
+## Checklist before requesting a review
+- [ ] I have performed a self-review of my code
+- [ ] If it is a core feature, I have added thorough tests
+- [ ] Do we need to implement analytics?
+- [ ] Will this be part of a product update? If yes, please write one phrase about this update
+EOT
+  commit_message     = "Add Pull Request template"
+  overwrite_on_create = true
 }
 
 resource "github_repository_deploy_key" "deploy_key" {
-  title      = "DEPLOY_KEY"
   repository = github_repository.repo.name
-  key        = var.deploy_key
+  title      = "DEPLOY_KEY"
+  key        = file(var.deploy_key_path)
   read_only  = false
 }
 
-# Discord notification setup would require external integration, not directly supported by Terraform
+resource "github_actions_secret" "discord_webhook" {
+  repository    = github_repository.repo.name
+  secret_name   = "DISCORD_WEBHOOK"
+  plaintext_value = var.discord_webhook_url
+}
+
+resource "github_actions_secret" "pat" {
+  repository    = github_repository.repo.name
+  secret_name   = "PAT"
+  plaintext_value = var.github_token
+}
