@@ -17,7 +17,7 @@ resource "github_branch" "develop" {
   branch     = "develop"
 }
 
-resource "github_branch_default" "develop" {
+resource "github_branch_default" "default" {
   repository = github_repository.repo.name
   branch     = github_branch.develop.branch
 }
@@ -27,8 +27,8 @@ resource "github_branch_protection" "main" {
   pattern        = "main"
 
   required_pull_request_reviews {
-    dismiss_stale_reviews           = true
-    require_code_owner_reviews      = true
+    dismiss_stale_reviews = true
+    require_code_owner_reviews = true
   }
 }
 
@@ -41,7 +41,7 @@ resource "github_branch_protection" "develop" {
   }
 }
 
-resource "github_repository_collaborator" "softservedata" {
+resource "github_repository_collaborator" "collaborator" {
   repository = github_repository.repo.name
   username   = "softservedata"
   permission = "push"
@@ -76,3 +76,5 @@ resource "github_repository_deploy_key" "deploy_key" {
   key        = var.deploy_key
   read_only  = false
 }
+
+# Discord notification setup would require external integration, not directly supported by Terraform
