@@ -13,18 +13,16 @@ resource "github_repository" "repo" {
   default_branch = "develop"
 }
 
-resource "github_branch" "develop" {
-  repository = github_repository.repo.name
-  branch     = "develop"
-}
-
 resource "github_repository_collaborator" "collaborator" {
   repository = github_repository.repo.name
   username   = "softservedata"
-  permission = "push"
+  permission = "push"  # Adjust permissions as needed
 }
 
-variable "github_token" {
-  description = "GitHub Token"
-  type        = string
+resource "github_branch_protection" "develop_protection" {
+  repository = github_repository.repo.name
+  branch     = "develop"
+  required_pull_request_reviews {
+    required_approving_review_count = 2
+  }
 }
