@@ -1,31 +1,3 @@
-variable "github_token" {
-  description = "GitHub token for authentication"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_owner" {
-  description = "GitHub owner (username or organization)"
-  type        = string
-}
-
-variable "repository_name" {
-  description = "Name of the GitHub repository"
-  type        = string
-}
-
-variable "pat" {
-  description = "Personal Access Token for GitHub Actions"
-  type        = string
-  sensitive   = true
-}
-
-variable "deploy_key" {
-  description = "Deploy key for the repository"
-  type        = string
-  sensitive   = true
-}
-
 provider "github" {
   token = var.github_token
   owner = var.github_owner
