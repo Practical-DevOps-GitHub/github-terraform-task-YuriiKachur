@@ -17,7 +17,7 @@ resource "github_branch" "develop" {
   branch     = "develop"
 }
 
-resource "github_branch_default" "default" {
+resource "github_branch" "default" {
   repository = github_repository.repo.name
   branch     = github_branch.develop.branch
 }
