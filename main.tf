@@ -3,14 +3,6 @@ provider "github" {
   owner = var.github_owner
 }
 
-resource "github_repository" "repo" {
-  name               = var.repository_name
-  description        = "Terraform managed repository"
-  visibility         = "private"
-  auto_init          = true
-  license_template   = "mit"
-  gitignore_template = "Terraform"
-}
 
 resource "github_branch" "develop" {
   repository = github_repository.repo.name
