@@ -17,35 +17,11 @@ resource "github_branch" "develop" {
   branch     = "develop"
 }
 
-resource "github_branch" "default" {
+resource "github_branch_default" "default" {
   repository = github_repository.repo.name
   branch     = github_branch.develop.branch
 }
 
-resource "github_branch_protection" "main" {
-  repository_id  = github_repository.repo.node_id
-  pattern        = "main"
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = true
-    require_code_owner_reviews      = true
-  }
-}
-
-resource "github_branch_protection" "develop" {
-  repository_id  = github_repository.repo.node_id
-  pattern        = "develop"
-
-  required_pull_request_reviews {
-    required_approving_review_count = 2
-  }
-}
-
-resource "github_repository_collaborator" "collaborator" {
-  repository = github_repository.repo.name
-  username   = "softservedata"
-  permission = "push"
-}
 
 resource "github_repository_file" "pull_request_template" {
   repository          = github_repository.repo.name
