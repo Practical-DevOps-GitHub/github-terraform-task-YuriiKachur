@@ -61,7 +61,7 @@ resource "github_branch_protection" "develop" {
   required_pull_request_reviews {
     required_approving_review_count = 2
     dismiss_stale_reviews           = true
-    require_code_owner_reviews       = false
+    require_code_owner_reviews      = false
   }
 
   enforce_admins = true
