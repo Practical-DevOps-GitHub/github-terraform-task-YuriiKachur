@@ -1,3 +1,31 @@
+variable "github_token" {
+  description = "GitHub token for authentication"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_owner" {
+  description = "GitHub owner (username or organization)"
+  type        = string
+}
+
+variable "repository_name" {
+  description = "Name of the GitHub repository"
+  type        = string
+}
+
+variable "pat" {
+  description = "Personal Access Token for GitHub Actions"
+  type        = string
+  sensitive   = true
+}
+
+variable "deploy_key" {
+  description = "Deploy key for the repository"
+  type        = string
+  sensitive   = true
+}
+
 provider "github" {
   token = var.github_token
   owner = var.github_owner
@@ -27,8 +55,8 @@ resource "github_branch_protection" "main" {
   pattern        = "main"
 
   required_pull_request_reviews {
-    dismiss_stale_reviews = true
-    require_code_owner_reviews = true
+    dismiss_stale_reviews           = true
+    require_code_owner_reviews      = true
   }
 }
 
@@ -76,5 +104,3 @@ resource "github_repository_deploy_key" "deploy_key" {
   key        = var.deploy_key
   read_only  = false
 }
-
-# Discord notification setup would require external integration, not directly supported by Terraform
