@@ -11,6 +11,10 @@ resource "github_repository" "repo" {
   name        = var.repo_name
   description = "Repository managed by Terraform"
   visibility  = "private"
+  auto_init   = true
+  has_issues  = true
+  has_projects = true
+  has_wiki    = true
 }
 
 resource "github_repository_collaborator" "collaborator" {
@@ -32,17 +36,27 @@ resource "github_branch_default" "default" {
 resource "github_branch_protection" "develop_protection" {
   repository = github_repository.repo.name
   branch     = github_branch.develop.branch
+  required_status_checks {
+    strict   = true
+    contexts = []
+  }
   required_pull_request_reviews {
     required_approving_review_count = 2
   }
+  restrictions {}
 }
 
 resource "github_branch_protection" "main_protection" {
   repository = github_repository.repo.name
   branch     = "main"
+  required_status_checks {
+    strict   = true
+    contexts = []
+  }
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+  restrictions {}
 }
 
 resource "github_repository_file" "codeowners" {
