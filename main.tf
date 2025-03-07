@@ -130,9 +130,3 @@ variable "deploy_key" {
   type        = string
   sensitive   = true
 }
-
-variable "github_pat" {
-  description = "GitHub Personal Access Token for Actions"
-  type        = string
-  sensitive   = true
-}
