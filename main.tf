@@ -10,6 +10,11 @@ terraform {
 provider "github" {
 }
 
+provider "github" {
+  token = var.github_token
+  owner = var.github_owner
+}
+
 variable "github_token" {
   description = "GitHub Personal Access Token"
   type        = string
@@ -116,4 +121,30 @@ EOT
   commit_message = "Add pull request template"
 }
 
+# Add a deploy key
+resource "github_repository_deploy_key" "deploy_key" {
+  repository = github_repository.repo.name
+  title      = "DEPLOY_KEY"
+  key        = var.deploy_key
+  read_only  = false
+}
 
+# Create a PAT and add it to GitHub Actions secrets
+resource "github_actions_secret" "pat" {
+  repository      = github_repository.repo.name
+  secret_name     = "PAT"
+  plaintext_value = var.github_pat
+}
+
+# Variables for sensitive data
+variable "deploy_key" {
+  description = "Deploy key for the repository"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_pat" {
+  description = "GitHub Personal Access Token for Actions"
+  type        = string
+  sensitive   = true
+}
